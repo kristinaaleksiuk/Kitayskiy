@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Произношение: первые слоги</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500&family=Manrope:wght@400;600;800&display=swap">
+<style>
+:root{--bg:#eef1f2;--surface:#fff;--ink:#14262b;--mute:#5d6f74;--line:#cfd8da;--acc:#2b3a8c;--accink:#fff;--hi:#ffd84d;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1a1e;--surface:#17262b;--ink:#e8f0f1;--mute:#8fa3a8;--line:#2a3d43;--acc:#9fb0ff;--accink:#0f1a1e;--hi:#ffd84d}}
+:root[data-theme="dark"]{--bg:#0f1a1e;--surface:#17262b;--ink:#e8f0f1;--mute:#8fa3a8;--line:#2a3d43;--acc:#9fb0ff;--accink:#0f1a1e;--hi:#ffd84d}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Manrope,system-ui,sans-serif}
+main{max-width:760px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:1.5rem;margin:0 0 4px;font-weight:800}
+.sub{color:var(--mute);margin:0 0 18px}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px}
+.tabs button{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:999px;font:inherit;font-weight:600;cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--acc);color:var(--accink);border-color:var(--acc)}
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px;display:grid;grid-template-columns:auto 1fr;gap:6px 20px;align-items:center}
+.hz{font:500 76px/1 "Noto Serif SC",serif;min-width:90px;text-align:center}
+.py{font-size:2rem;font-weight:800;letter-spacing:.02em}
+.ru{color:var(--mute);font-size:.95rem}
+.tones{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.tones button,.act button,.act label{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:8px 14px;font:inherit;font-weight:600;cursor:pointer}
+.tones button[aria-pressed=true]{background:var(--hi);color:#14262b;border-color:var(--hi)}
+.tones button:disabled{opacity:.35;cursor:not-allowed}
+.act{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.act .play{background:var(--acc);color:var(--accink);border-color:var(--acc)}
+.act input{display:none}
+.note{font-size:.85rem;color:var(--mute)}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:8px 14px;font:inherit;font-size:1.15rem;font-weight:600;cursor:pointer;min-width:52px}
+.chip.on{outline:3px solid var(--hi)}
+.chip.playing{background:var(--acc);color:var(--accink)}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.all{display:flex;gap:8px;margin:0 0 12px}
+.all button{border:0;background:none;color:var(--acc);font:inherit;font-weight:600;cursor:pointer;padding:4px 0;text-decoration:underline}
+</style>
+</head>
+<body>
+<main>
+<h1>Первые слоги китайского</h1>
+<p class="sub">Нажмите на слог, чтобы услышать его. Выберите тон и сравните с аудиокнигой.</p>
+<div class="tabs" role="tablist" id="tabs"></div>
+<section class="stage" aria-live="polite">
+  <div class="hz" id="hz">妈</div>
+  <div><div class="py" id="py">mā</div><div class="ru" id="ru"></div></div>
+  <div class="tones" id="tones"></div>
+  <div class="act">
+    <button class="play" id="play">▶ Слушать</button>
+    <label>Свой фрагмент из аудиокниги<input type="file" accept="audio/*" id="file"></label>
+    <button id="clear" hidden>Убрать фрагмент</button>
+    <span class="note" id="src"></span>
+  </div>
+</section>
+<div class="all"><button id="playRow">Прослушать упражнение подряд</button></div>
+<div id="drills"></div>
+<p class="note">Синтезатор голоса зависит от браузера и может не иметь китайского голоса. Тогда загрузите фрагмент из аудиокниги: он будет звучать вместо синтезатора (только в этой сессии).</p>
+</main>
+<script>
+var MARK={a:'āáǎà',i:'īíǐì',u:'ūúǔù'};
+var CH={
+ a:{1:'阿'}, u:{1:'乌',2:'无',3:'五',4:'物'}, i:{1:'衣',2:'姨',3:'椅',4:'义'},
+ ma:{1:'妈',2:'麻',3:'马',4:'骂'}, mi:{1:'咪',2:'迷',3:'米',4:'蜜'}, mu:{2:'模',3:'母',4:'木'},
+ fa:{1:'发',2:'乏',3:'法',4:'珐'}, fu:{1:'夫',2:'福',3:'府',4:'父'},
+ na:{1:'呐',2:'拿',3:'哪',4:'那'}, ni:{1:'妮',2:'泥',3:'你',4:'逆'}, nu:{2:'奴',3:'努',4:'怒'}
+};
+var SHOWN={a:'a',u:'wu',i:'yi'};
+var RU={a:'а',u:'у (у-образный «у», губы вперёд)',i:'и',ma:'ма',mi:'ми',mu:'му',fa:'фа',fu:'фу',na:'на',ni:'ни',nu:'ну'};
+var LESSONS=[
+ {t:'a · i · u',rows:['i u a|u i a|a u i|u a i|a i u|i a u']},
+ {t:'m',rows:['i mi u mu a ma u mu i mi a ma','a ma i mi u mu i mi a ma u mu','u mu a ma i mi a ma u mu i mi']},
+ {t:'f',rows:['fa a fu u ma a mi i mu u','fa fu ma fa mu fu a fa u fu']},
+ {t:'n',rows:['na ny nu ni ni','ni nu na na ni nu nu na ni','na ni nu nu ni na ni nu na','ni ni nini nini ninini ninini']},
+ {t:'Итоговое',rows:['mi mu ma','ni nu na','fu fa']}
+];
+LESSONS[3].rows[0]='na nu ni';
+var cur='ma',tone=1,lesson=0,custom={},audio=null,stop=false;
+function pinyin(s,t){
+  var base=SHOWN[s]||s;
+  if(s.length==1&&!SHOWN[s]) base=s;
+  var v=s[s.length-1];
+  var m=MARK[v][t-1];
+  var i=base.lastIndexOf(v);
+  return base.slice(0,i)+m+base.slice(i+1);
+}
+function hanzi(s,t){var d=CH[s]||{};return d[t]||d[1]||d[2]||d[3]||d[4];}
+function pickTone(s){if(!(CH[s]&&CH[s][tone])){for(var t=1;t<=4;t++)if(CH[s][t]){tone=t;break;}}}
+function key(){return cur+tone}
+function render(){
+  pickTone(cur);
+  document.getElementById('hz').textContent=hanzi(cur,tone);
+  document.getElementById('py').textContent=pinyin(cur,tone);
+  document.getElementById('ru').textContent='Русский ориентир: '+RU[cur]+'. Тон '+tone+'.';
+  var tb=document.getElementById('tones');tb.innerHTML='';
+  [1,2,3,4].forEach(function(t){
+    var b=document.createElement('button');b.textContent=pinyin(cur,t);
+    b.disabled=!(CH[cur]&&CH[cur][t]);b.setAttribute('aria-pressed',t==tone);
+    b.onclick=function(){tone=t;render();play(cur,t)};tb.appendChild(b);
+  });
+  var has=!!custom[key()];
+  document.getElementById('clear').hidden=!has;
+  document.getElementById('src').textContent=has?'Играет ваш фрагмент':'Играет синтезатор';
+  document.querySelectorAll('.chip').forEach(function(c){c.classList.toggle('on',c.dataset.s==cur)});
+}
+function play(s,t){
+  return new Promise(function(res){
+    t=t||tone;
+    var k=s+t;
+    if(custom[k]){
+      if(audio)audio.pause();
+      audio=new Audio(custom[k]);audio.onended=res;audio.onerror=res;audio.play().catch(res);return;
+    }
+    var ch=hanzi(s,t)||hanzi(s,1);
+    if(!('speechSynthesis' in window)){res();return}
+    speechSynthesis.cancel();
+    var u=new SpeechSynthesisUtterance(ch);u.lang='zh-CN';u.rate=.7;
+    var vs=speechSynthesis.getVoices().filter(function(v){return /^zh/i.test(v.lang)});
+    if(vs.length)u.voice=vs[0];
+    u.onend=res;u.onerror=res;speechSynthesis.speak(u);
+  });
+}
+function split(tok){return tok.match(/[mfn]?[iua]/g)||[]}
+function pick(s,btn){
+  cur=s;
+  if(!(CH[s]&&CH[s][tone])){}
+  render();play(cur,tone);
+  if(btn){btn.classList.add('playing');setTimeout(function(){btn.classList.remove('playing')},500)}
+}
+function drills(){
+  var box=document.getElementById('drills');box.innerHTML='';
+  LESSONS[lesson].rows.forEach(function(r){
+    var row=document.createElement('div');row.className='row';
+    r.split(/[ |]/).filter(Boolean).forEach(function(tok){
+      var b=document.createElement('button');b.className='chip';b.textContent=tok;
+      var parts=split(tok);b.dataset.s=parts[0]||tok;
+      b.onclick=function(){
+        if(parts.length==1){pick(parts[0],b)}
+        else{(async function(){for(var p of parts){cur=p;render();await play(p,tone)}})()}
+      };
+      row.appendChild(b);
+    });
+    box.appendChild(row);
+  });
+}
+function tabs(){
+  var t=document.getElementById('tabs');t.innerHTML='';
+  LESSONS.forEach(function(l,i){
+    var b=document.createElement('button');b.textContent=l.t;b.setAttribute('role','tab');
+    b.setAttribute('aria-selected',i==lesson);
+    b.onclick=function(){lesson=i;tabs();drills()};t.appendChild(b);
+  });
+}
+document.getElementById('play').onclick=function(){play(cur,tone)};
+document.getElementById('playRow').onclick=async function(){
+  var chips=[].slice.call(document.querySelectorAll('.chip'));
+  for(var c of chips){
+    var parts=split(c.textContent);
+    for(var p of parts){cur=p;render();c.classList.add('playing');await play(p,tone);c.classList.remove('playing')}
+  }
+};
+document.getElementById('file').onchange=function(e){
+  var f=e.target.files[0];if(!f)return;
+  custom[key()]=URL.createObjectURL(f);e.target.value='';render();play(cur,tone);
+};
+document.getElementById('clear').onclick=function(){delete custom[key()];render()};
+if('speechSynthesis' in window)speechSynthesis.onvoiceschanged=function(){};
+tabs();drills();render();
+</script>
+</body>
+</html>
